@@ -175,10 +175,16 @@ canvas{max-height:170px;}
 .gm-top{display:flex;align-items:center;justify-content:space-between;padding:16px 16px 12px;border-bottom:1px solid var(--border);}
 .gm-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;}
 .gm-close{background:var(--s3);border:none;border-radius:100px;width:30px;height:30px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;}
-.gif-wrap{background:#000;min-height:180px;display:flex;align-items:center;justify-content:center;position:relative;}
-.gif-wrap img{width:100%;max-height:260px;object-fit:contain;display:block;}
-.gif-loading{color:#666;font-size:13px;position:absolute;}
-.gif-error{color:#888;font-size:12px;text-align:center;padding:20px;}
+.demo-wrap{padding:12px 16px;background:var(--s2);border-bottom:1px solid var(--border);}
+.demo-phases{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.demo-phase{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 11px;}
+.demo-phase-label{font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px;}
+.demo-phase-label.start{color:var(--ink-3);}
+.demo-phase-label.end{color:var(--profile);}
+.demo-phase-desc{font-size:12px;color:var(--ink-2);line-height:1.55;}
+.demo-key{background:var(--profile-pale);border:1px solid var(--profile-light);border-radius:var(--r);padding:8px 11px;}
+.demo-key-label{font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--profile);margin-bottom:5px;}
+.demo-key-tip{font-size:12px;color:var(--ink-2);line-height:1.55;}
 .gtabs{display:flex;border-bottom:1px solid var(--border);padding:0 14px;}
 .gtab{font-size:12.5px;font-weight:600;padding:10px 12px;border:none;background:transparent;cursor:pointer;color:var(--ink-3);border-bottom:2.5px solid transparent;transition:all .15s;margin-bottom:-1px;}
 .gtab.on{color:var(--profile);border-bottom-color:var(--profile);}
@@ -467,27 +473,77 @@ const GUIDE_MAP = {
 // ExerciseDB free API base
 // Images served from GitHub raw CDN — no external API needed
 
-// Hardcoded exercise image URLs from free-exercise-db (GitHub raw CDN)
-// No API calls — works fully offline and on restricted networks
-const EXERCISE_IMAGES = {
-  hipthrust:   ['Barbell_Hip_Thrust/0.jpg',               'Barbell_Hip_Thrust/1.jpg'],
-  rdl:         ['Dumbbell_Romanian_Deadlift/0.jpg',        'Dumbbell_Romanian_Deadlift/1.jpg'],
-  squat:       ['Dumbbell_Goblet_Squat/0.jpg',             'Dumbbell_Goblet_Squat/1.jpg'],
-  latpulldown: ['Cable_Pulldown/0.jpg',                    'Cable_Pulldown/1.jpg'],
-  shoulderpress:['Dumbbell_Seated_Shoulder_Press/0.jpg',   'Dumbbell_Seated_Shoulder_Press/1.jpg'],
-  lateralraise:['Dumbbell_Lateral_Raise/0.jpg',            'Dumbbell_Lateral_Raise/1.jpg'],
-  inclinepress:['Dumbbell_Incline_Bench_Press/0.jpg',      'Dumbbell_Incline_Bench_Press/1.jpg'],
-  cablerow:    ['Seated_Cable_Row/0.jpg',                  'Seated_Cable_Row/1.jpg'],
-  facepull:    ['Cable_Face_Pull/0.jpg',                   'Cable_Face_Pull/1.jpg'],
-  triceppush:  ['Triceps_Pushdown/0.jpg',                  'Triceps_Pushdown/1.jpg'],
-  bicep:       ['Dumbbell_Alternate_Bicep_Curl/0.jpg',     'Dumbbell_Alternate_Bicep_Curl/1.jpg'],
-  legcurl:     ['Lying_Leg_Curl/0.jpg',                    'Lying_Leg_Curl/1.jpg'],
-  hipkick:     ['Donkey_Kickback/0.jpg',                   'Donkey_Kickback/1.jpg'],
+// Self-contained exercise demo data — zero network requests, works 100% offline
+const EXERCISE_DEMOS = {
+  hipthrust:{
+    start:{label:"START",desc:"Sit on floor, upper back on bench edge. Bar padded across hip crease. Feet flat, knees bent ~90°. Hips low, glutes off floor."},
+    end:{label:"TOP — SQUEEZE",desc:"Drive hips up until body is flat from knees to shoulders. Glutes fully contracted. 1-second pause here every rep."},
+    key:"The bar stays across your hip crease throughout. If it rolls toward your stomach you've lost position. Push knees OUTWARD as you drive up."
+  },
+  rdl:{
+    start:{label:"START",desc:"Stand tall, DBs/bar in front of thighs, overhand grip. Soft bend in knees — fix this angle and never change it."},
+    end:{label:"HINGE POINT",desc:"Push hips straight BACK (not down). Bar drags close to legs. Lower until strong hamstring stretch — usually mid-shin. Spine stays neutral."},
+    key:"This is a hip hinge, not a squat. The knees barely move. If your knees are bending more as you lower, you're squatting — reset and push the hips back."
+  },
+  squat:{
+    start:{label:"START",desc:"Hold DB at chest. Feet shoulder-width, toes out 15–30°. Stand tall, core braced. This is your plumb line."},
+    end:{label:"DEPTH",desc:"Sit back AND down — thighs parallel to floor minimum. Chest stays tall. Knees push out over toes throughout."},
+    key:"Think of pushing the floor away from you on the way up, not standing up. Weight stays in mid-foot — heels never rise."
+  },
+  latpulldown:{
+    start:{label:"START",desc:"Wide overhand grip, arms fully extended. Let the weight pull you into a full lat stretch at the top. Slight lean back (10–15°)."},
+    end:{label:"PULL",desc:"Bar comes to upper chest. Elbows drive down and back — think 'elbows to back pockets'. Shoulder blades squeeze together at bottom."},
+    key:"Initiate with your shoulder blades, not your arms. Before your elbows bend, your shoulder blades should already be pulling down and together."
+  },
+  shoulderpress:{
+    start:{label:"START",desc:"Seated, back supported. DBs at jaw height, elbows at 90° and slightly in front of ears — not behind. Core tight."},
+    end:{label:"TOP",desc:"Press directly overhead to full arm extension. Slight bend at elbow at top — do not lock out aggressively. Lower 2 seconds."},
+    key:"Keep your lower back pressed to the bench throughout. If you're arching, the weight is too heavy or your core has switched off."
+  },
+  lateralraise:{
+    start:{label:"START",desc:"Stand upright. DBs at sides, slight fixed bend in elbows. Keep this elbow angle for the entire set — it never changes."},
+    end:{label:"TOP — SHOULDER HEIGHT",desc:"Raise until arms are level with shoulders — no higher. Lead with elbows, not hands. Thumbs slightly lower than pinkies at top."},
+    key:"Lower slowly — 3 full seconds down. This is where the muscle actually grows. Going too heavy makes you swing and removes all stimulus."
+  },
+  inclinepress:{
+    start:{label:"START",desc:"Bench 30–45°. DBs at shoulder height, elbows at 45–60° from torso — not flared 90°. Feel stretch in upper chest."},
+    end:{label:"TOP",desc:"Press up and slightly inward — arc path, not straight up. DBs close together at top. Slight elbow bend — never full lockout."},
+    key:"The arc path is the key difference from a flat press. DBs travel inward as they rise. If they go straight up, you're missing the upper chest."
+  },
+  cablerow:{
+    start:{label:"START",desc:"Sit tall, natural arch in lower back. Arms fully extended forward — feel the full lat stretch. This stretch is half the exercise."},
+    end:{label:"PULL",desc:"Retract shoulder blades FIRST before arms bend. Pull handle to lower chest/stomach. Pause and squeeze shoulder blades together."},
+    key:"The return is as important as the pull. Take 3 seconds to return to full extension. Never let the cable yank you forward — control it."
+  },
+  facepull:{
+    start:{label:"START",desc:"Cable at eye height, rope attachment. Grip with thumbs toward you. Step back — arms fully extended, slight lean back."},
+    end:{label:"PULL — ELBOWS HIGH",desc:"Pull rope to forehead. Elbows must be ABOVE shoulder level and wide. Fists end up near your ears. Pause at end range."},
+    key:"The elbows must stay high — this is what makes it a face pull and not a row. If your elbows drop below your shoulders, stop and restart."
+  },
+  triceppush:{
+    start:{label:"START",desc:"Stand close to cable, slight forward lean. Upper arms pinned to sides. Forearms parallel to floor — 90° bend at elbow."},
+    end:{label:"FULL EXTENSION",desc:"Push down to complete lockout. Squeeze the tricep hard for 1 second at the bottom. Upper arms did NOT move."},
+    key:"The upper arms stay completely still throughout — they are pinned to your sides. Only the forearms move. If your elbows drift forward, the weight is too heavy."
+  },
+  bicep:{
+    start:{label:"START",desc:"Stand upright, DBs at sides, palms facing forward. Upper arms pinned at sides. Full extension — do not pre-curl."},
+    end:{label:"TOP — SQUEEZE",desc:"Curl to full contraction. Supinate (rotate palm inward/up) at top for full bicep peak. Squeeze before lowering."},
+    key:"Lower in 2–3 slow seconds. This eccentric phase is where most of the stimulus comes from. Rushing down wastes the best part of the rep."
+  },
+  legcurl:{
+    start:{label:"START",desc:"Lie face down. Pad sits just below your calves — not on the Achilles. Hips pressed flat against pad."},
+    end:{label:"CURL — SQUEEZE",desc:"Curl heels toward glutes, full range of motion. Squeeze hamstrings for 1 second at top. Hips stay flat throughout."},
+    key:"Lower in 3 slow seconds. The hamstring gets its greatest stimulus during the eccentric (lowering) phase — do not let the weight drop."
+  },
+  hipkick:{
+    start:{label:"START",desc:"Cable attached to ankle. Face the cable machine. Hold for balance, slight forward lean. Hips square — do not rotate."},
+    end:{label:"KICK — SQUEEZE",desc:"Kick leg straight back and up. Feel the upper glute contract. 1-second squeeze at the top of each rep."},
+    key:"Keep hips perfectly square throughout. The moment one hip rises higher than the other, you have lost glute isolation and are using your lower back."
+  },
 };
-const IMG_BASE = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/';
 
-function getExerciseImages(key) {
-  return (EXERCISE_IMAGES[key] || []).map(p => IMG_BASE + p);
+function getExerciseDemo(key) {
+  return EXERCISE_DEMOS[key] || null;
 }
 
 // ═══════════════════════════════════════════════
@@ -754,31 +810,30 @@ function openGuide(key){
   // Show overlay
   document.getElementById('guide-ov').classList.add('on');
 
-  // Load images — hardcoded GitHub CDN, no API calls needed
+  // Render self-contained demo — zero network requests
   const wrap=document.getElementById('gif-wrap');
-  wrap.innerHTML=`<div class="gif-loading">Loading demonstration…</div>`;
-
-  const imgs = getExerciseImages(key);
-  if(imgs.length > 0){
-    // Show two side-by-side images: start and end position
+  const demo=getExerciseDemo(key);
+  if(demo){
     wrap.innerHTML=`
-      <div style="display:flex;gap:2px;width:100%;background:#000;">
-        <div style="flex:1;position:relative;">
-          <div style="position:absolute;top:6px;left:6px;background:rgba(0,0,0,.6);color:#fff;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;z-index:1;">START</div>
-          <img src="${imgs[0]}" alt="${g.name} start position" style="width:100%;display:block;object-fit:cover;max-height:220px;"
-            onerror="this.parentElement.innerHTML='<div style=\'padding:20px;color:#666;font-size:12px;text-align:center;\'>Image unavailable</div>'">
+      <div class="demo-wrap">
+        <div class="demo-phases">
+          <div class="demo-phase">
+            <div class="demo-phase-label start">${demo.start.label}</div>
+            <div class="demo-phase-desc">${demo.start.desc}</div>
+          </div>
+          <div class="demo-phase">
+            <div class="demo-phase-label end">${demo.end.label}</div>
+            <div class="demo-phase-desc">${demo.end.desc}</div>
+          </div>
         </div>
-        <div style="flex:1;position:relative;">
-          <div style="position:absolute;top:6px;left:6px;background:rgba(26,92,56,.85);color:#fff;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;z-index:1;">END</div>
-          <img src="${imgs[1]||imgs[0]}" alt="${g.name} end position" style="width:100%;display:block;object-fit:cover;max-height:220px;"
-            onerror="this.parentElement.innerHTML='<div style=\'padding:20px;color:#666;font-size:12px;text-align:center;\'>Image unavailable</div>'">
+        <div class="demo-key">
+          <div class="demo-key-label">Key coaching point</div>
+          <div class="demo-key-tip">${demo.key}</div>
         </div>
       </div>`;
   } else {
-    wrap.innerHTML=`<div class="gif-error">
-      <div style="font-size:28px;margin-bottom:6px">📋</div>
-      <div style="font-weight:600;margin-bottom:4px">${g.name}</div>
-      <div style="font-size:12px">Follow the written cues below — they are complete.</div>
+    wrap.innerHTML=`<div style="padding:16px;background:var(--s2)">
+      <div style="font-size:13px;color:var(--ink-3)">See the Form tab below for step-by-step cues.</div>
     </div>`;
   }
 }
