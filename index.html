@@ -465,19 +465,29 @@ const GUIDE_MAP = {
 };
 
 // ExerciseDB free API base
-const EDB = 'https://exercisedb.dev/api/exercises';
+// Images served from GitHub raw CDN — no external API needed
 
-async function fetchExerciseGif(searchTerm) {
-  try {
-    const q = encodeURIComponent(searchTerm);
-    const res = await fetch(`${EDB}/name/${q}?limit=3&offset=0`);
-    if (!res.ok) throw new Error('API error');
-    const data = await res.json();
-    if (data && data.length > 0 && data[0].gifUrl) return data[0].gifUrl;
-    return null;
-  } catch(e) {
-    return null;
-  }
+// Hardcoded exercise image URLs from free-exercise-db (GitHub raw CDN)
+// No API calls — works fully offline and on restricted networks
+const EXERCISE_IMAGES = {
+  hipthrust:   ['Barbell_Hip_Thrust/0.jpg',               'Barbell_Hip_Thrust/1.jpg'],
+  rdl:         ['Dumbbell_Romanian_Deadlift/0.jpg',        'Dumbbell_Romanian_Deadlift/1.jpg'],
+  squat:       ['Dumbbell_Goblet_Squat/0.jpg',             'Dumbbell_Goblet_Squat/1.jpg'],
+  latpulldown: ['Cable_Pulldown/0.jpg',                    'Cable_Pulldown/1.jpg'],
+  shoulderpress:['Dumbbell_Seated_Shoulder_Press/0.jpg',   'Dumbbell_Seated_Shoulder_Press/1.jpg'],
+  lateralraise:['Dumbbell_Lateral_Raise/0.jpg',            'Dumbbell_Lateral_Raise/1.jpg'],
+  inclinepress:['Dumbbell_Incline_Bench_Press/0.jpg',      'Dumbbell_Incline_Bench_Press/1.jpg'],
+  cablerow:    ['Seated_Cable_Row/0.jpg',                  'Seated_Cable_Row/1.jpg'],
+  facepull:    ['Cable_Face_Pull/0.jpg',                   'Cable_Face_Pull/1.jpg'],
+  triceppush:  ['Triceps_Pushdown/0.jpg',                  'Triceps_Pushdown/1.jpg'],
+  bicep:       ['Dumbbell_Alternate_Bicep_Curl/0.jpg',     'Dumbbell_Alternate_Bicep_Curl/1.jpg'],
+  legcurl:     ['Lying_Leg_Curl/0.jpg',                    'Lying_Leg_Curl/1.jpg'],
+  hipkick:     ['Donkey_Kickback/0.jpg',                   'Donkey_Kickback/1.jpg'],
+};
+const IMG_BASE = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/';
+
+function getExerciseImages(key) {
+  return (EXERCISE_IMAGES[key] || []).map(p => IMG_BASE + p);
 }
 
 // ═══════════════════════════════════════════════
@@ -716,7 +726,7 @@ function togDone(exId,s,btn){
 // ═══════════════════════════════════════════════
 // GUIDE MODAL with live GIF from ExerciseDB
 // ═══════════════════════════════════════════════
-async function openGuide(key){
+function openGuide(key){
   const g=GUIDE_DATA[key];if(!g)return;
   document.getElementById('gm-title').textContent=g.name;
 
@@ -744,26 +754,36 @@ async function openGuide(key){
   // Show overlay
   document.getElementById('guide-ov').classList.add('on');
 
-  // Load GIF
+  // Load images — hardcoded GitHub CDN, no API calls needed
   const wrap=document.getElementById('gif-wrap');
-  const loading=document.getElementById('gif-loading');
-  wrap.innerHTML=`<div class="gif-loading" id="gif-loading">Loading demonstration…</div>`;
+  wrap.innerHTML=`<div class="gif-loading">Loading demonstration…</div>`;
 
-  const gifUrl=await fetchExerciseGif(g.search);
-  if(gifUrl){
-    wrap.innerHTML=`<img src="${gifUrl}" alt="${g.name} demonstration" loading="lazy" onload="this.previousSibling&&this.previousSibling.remove()" onerror="handleGifError()">`;
+  const imgs = getExerciseImages(key);
+  if(imgs.length > 0){
+    // Show two side-by-side images: start and end position
+    wrap.innerHTML=`
+      <div style="display:flex;gap:2px;width:100%;background:#000;">
+        <div style="flex:1;position:relative;">
+          <div style="position:absolute;top:6px;left:6px;background:rgba(0,0,0,.6);color:#fff;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;z-index:1;">START</div>
+          <img src="${imgs[0]}" alt="${g.name} start position" style="width:100%;display:block;object-fit:cover;max-height:220px;"
+            onerror="this.parentElement.innerHTML='<div style=\'padding:20px;color:#666;font-size:12px;text-align:center;\'>Image unavailable</div>'">
+        </div>
+        <div style="flex:1;position:relative;">
+          <div style="position:absolute;top:6px;left:6px;background:rgba(26,92,56,.85);color:#fff;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;z-index:1;">END</div>
+          <img src="${imgs[1]||imgs[0]}" alt="${g.name} end position" style="width:100%;display:block;object-fit:cover;max-height:220px;"
+            onerror="this.parentElement.innerHTML='<div style=\'padding:20px;color:#666;font-size:12px;text-align:center;\'>Image unavailable</div>'">
+        </div>
+      </div>`;
   } else {
     wrap.innerHTML=`<div class="gif-error">
-      <div style="font-size:28px;margin-bottom:6px">🎥</div>
-      <div style="font-weight:600;margin-bottom:4px">Demo unavailable offline</div>
-      <div>Search "<strong>${g.search}</strong>" on YouTube for a visual guide. The written cues below are complete.</div>
+      <div style="font-size:28px;margin-bottom:6px">📋</div>
+      <div style="font-weight:600;margin-bottom:4px">${g.name}</div>
+      <div style="font-size:12px">Follow the written cues below — they are complete.</div>
     </div>`;
   }
 }
 
-function handleGifError(){
-  document.getElementById('gif-wrap').innerHTML=`<div class="gif-error"><div style="font-size:28px;margin-bottom:6px">🎥</div><div>Could not load animation. Check your internet connection and retry.</div></div>`;
-}
+// handleGifError removed — using static images
 function gTab(panel,el){
   document.querySelectorAll('.gtab').forEach(t=>t.classList.remove('on'));
   document.querySelectorAll('.gpanel').forEach(p=>p.classList.remove('on'));
